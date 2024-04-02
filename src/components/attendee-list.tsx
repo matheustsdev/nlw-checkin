@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   Search,
   MoreHorizontal,
@@ -6,8 +8,36 @@ import {
   ChevronRight,
   ChevronsRight,
 } from "lucide-react";
+import { IconButton } from "./icon-button";
+import { Table } from "./table/table";
+import { TableHeader } from "./table/table-header";
+import { TableCell } from "./table/table-cell";
+import { TableRow } from "./table/table-row";
+import { attendees } from "../data/attendees";
+import { intlFormatDistance } from "date-fns";
 
 export function AttendeeList() {
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.ceil(attendees.length / 10);
+
+  function goToFirstPage() {
+    setPage(1);
+  }
+
+  function goToPreviousPage() {
+    setPage(page - 1);
+  }
+
+  function goToNextPage() {
+    setPage(page + 1);
+  }
+
+  function goToLastPage() {
+    setPage(totalPages);
+  }
+
   return (
     <div className=" flex flex-col gap-4">
       <div className="flex gap-3 items-center">
@@ -22,72 +52,85 @@ export function AttendeeList() {
       </div>
 
       {/* === Table === */}
-      <div className="border border-white/10 rounded-lg">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-white/10">
-              <th style={{ width: 48 }} className="py-3 px-4 text-sm font-semibold text-left">
+      <Table>
+        <thead>
+          <tr className="border-b border-white/10">
+            <TableHeader style={{ width: 48 }}>
+              <input
+                type="checkbox"
+                className="size-4 bg-black/20 rounded border border-white/10"
+              />
+            </TableHeader>
+            <TableHeader>Código</TableHeader>
+            <TableHeader>Participante</TableHeader>
+            <TableHeader>Data de inscrição</TableHeader>
+            <TableHeader>Data de check-in</TableHeader>
+            <TableHeader style={{ width: 64 }}></TableHeader>
+          </tr>
+        </thead>
+        <tbody>
+          {attendees.slice((page - 1) * 10, page * 10).map((attendee) => (
+            <TableRow key={attendee.id}>
+              <TableCell>
                 <input
                   type="checkbox"
                   className="size-4 bg-black/20 rounded border border-white/10"
                 />
-              </th>
-              <th className="py-3 px-4 text-sm font-semibold text-left">Código</th>
-              <th className="py-3 px-4 text-sm font-semibold text-left">Participante</th>
-              <th className="py-3 px-4 text-sm font-semibold text-left">Data de inscrição</th>
-              <th className="py-3 px-4 text-sm font-semibold text-left">Data de check-in</th>
-              <th style={{ width: 64 }} className="py-3 px-4 text-sm font-semibold text-left"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: 10 }).map((_, index) => (
-              <tr key={index} className="border-b border-white/10 hover:bg-white/5">
-                <td className="py-3 px-4 text-sm">
-                  <input
-                    type="checkbox"
-                    className="size-4 bg-black/20 rounded border border-white/10"
-                  />
-                </td>
-                <td className="py-3 px-4 text-sm">000{index + 1}</td>
-                <td className="py-3 px-4 text-sm">Nome do participante</td>
-                <td className="py-3 px-4 text-sm">01/01/2021</td>
-                <td className="py-3 px-4 text-sm">01/01/2021</td>
-                <td className="py-3 px-4 text-sm text-right">
-                  <button className="bg-black/20 border border-white/10 rounded-md p-1.5">
-                    <MoreHorizontal className="size-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colSpan={3} className="py-3 px-4 text-sm text-left text-zinc-300">
-                Mostrando 10 de 228 itens
-              </td>
-              <td colSpan={3} className="py-3 px-4 text-sm text-left text-zinc-300 text-right">
-                <div className="inline-flex items-center gap-8">
-                  <span>Página 1 de 23</span>
-                  <div className="flex gap-1.5">
-                    <button className="bg-white/10 border border-white/10 rounded-md p-1.5">
-                      <ChevronsLeft className="size-4" />
-                    </button>
-                    <button className="bg-white/10 border border-white/10 rounded-md p-1.5">
-                      <ChevronLeft className="size-4" />
-                    </button>
-                    <button className="bg-white/10 border border-white/10 rounded-md p-1.5">
-                      <ChevronRight className="size-4" />
-                    </button>
-                    <button className="bg-white/10 border border-white/10 rounded-md p-1.5">
-                      <ChevronsRight className="size-4" />
-                    </button>
-                  </div>
+              </TableCell>
+              <TableCell>{attendee.id}</TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-1">
+                  <span className="font-semibold text-white">{attendee.name}</span>
+                  <span>{attendee.email}</span>
                 </div>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+              </TableCell>
+              <TableCell>
+                {intlFormatDistance(attendee.createdAt, new Date(), {
+                  locale: "pt-BR",
+                  numeric: "always",
+                })}
+              </TableCell>
+              <TableCell>
+                {intlFormatDistance(attendee.checkedInAt, new Date(), {
+                  locale: "pt-BR",
+                  numeric: "always",
+                })}
+              </TableCell>
+              <TableCell>
+                <IconButton transparent>
+                  <MoreHorizontal className="size-4" />
+                </IconButton>
+              </TableCell>
+            </TableRow>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <TableCell colSpan={3}>Mostrando 10 de {attendees.length} itens</TableCell>
+            <TableCell colSpan={3} className="text-right">
+              <div className="inline-flex items-center gap-8">
+                <span>
+                  Página {page} de {totalPages}
+                </span>
+                <div className="flex gap-1.5">
+                  <IconButton onClick={goToFirstPage} disabled={page === 1}>
+                    <ChevronsLeft className="size-4" />
+                  </IconButton>
+                  <IconButton onClick={goToPreviousPage} disabled={page === 1}>
+                    <ChevronLeft className="size-4" />
+                  </IconButton>
+                  <IconButton onClick={goToNextPage} disabled={page === totalPages}>
+                    <ChevronRight className="size-4" />
+                  </IconButton>
+                  <IconButton onClick={goToLastPage} disabled={page === totalPages}>
+                    <ChevronsRight className="size-4" />
+                  </IconButton>
+                </div>
+              </div>
+            </TableCell>
+          </tr>
+        </tfoot>
+      </Table>
     </div>
   );
 }
